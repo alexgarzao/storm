@@ -67,6 +67,7 @@ TODO
 * Conforme a carga (usuários), mostrar tempo de resposta, erros, bytes por segundo, …
 * Quando pertinente, alem de motrar o TS atual, mostrar o tempo desde que o teste iniciou
 * Testes por tempo de execucao ou por bateria (executa todo o teste e para)
+* Todos os reports acima podem ser feitos comparando 2 branchs distintos
 
 
 COMO VAI SER FEITO
