@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 )
@@ -20,25 +21,13 @@ func NewLoadTest(config *Config) (loadTest *LoadTest) {
 }
 
 func (loadTest *LoadTest) Run(scenary *Scenary) error {
-	// Fluxo principal
-	//
-	// Carrega config
-	// Inicializa dados a serem medidos
-	// Configura número processos
-	// Dispara threads conforme número usuários
-	// 	Inicializa medições cenário
-	// 	Para cada step
-	// 		Inicializa medições step
-	// 		Executa step
-	// 		Se erro aborta
-	// 		Coleta dados step
-	// 	Coleta dados cenário
-	// Coleta dados teste
-	// Gera report
+	stats := make(chan Stats, loadTest.Config.UniqueIds)
 
 	loadTest.Config.wg.Add(loadTest.Config.UniqueIds)
 
-	stats := make(chan Stats, loadTest.Config.UniqueIds)
+	statsDone := make(chan bool, 1)
+
+	go collectStats(loadTest.Config, stats, statsDone)
 
 	for i := 1; i <= loadTest.Config.UniqueIds; i++ {
 		context := new(Context)
@@ -53,28 +42,32 @@ func (loadTest *LoadTest) Run(scenary *Scenary) error {
 
 	close(stats)
 
-	printStats(stats)
-
+	<-statsDone
 	return nil
 }
 
-func printStats(stats chan Stats) {
-	// Estatísticas por cenário:
-	//     Rótulo (nome do cenário)
-	//     Número cenários executados (com erro / corretas) - nro e %
-	//     Tempo mínimo/médio/máximo
-	//     Bytes (média) retornados pelo servidor, ...
+// TODO: Essa rotina poderia apenas coletar, e ter outra para gerar os dados para tela, CSV, ...
+func collectStats(config *Config, stats chan Stats, done chan bool) {
+	startTime := time.Now()
 
 	// TODO: Hoje só temos um cenário. Mas a rotina deve ser revista para trabalhar com mais de um cenário.
-	numberOfScenarios := len(stats)
+	numberOfScenarios := 0
 	scenariosWithError := 0
-	var minTime time.Duration = 999999
+	var minTime time.Duration = 1<<63 - 1
 	var maxTime time.Duration
 	var totalTime time.Duration
 	var scenarioName string
 
 	for elem := range stats {
-		scenarioName = elem.Id
+		fmt.Printf("elem.EndpointID: [%v]\n", elem.EndpointID)
+		if elem.MustStat == false {
+			continue
+		}
+		if elem.EndpointID != "" {
+			continue
+		}
+		numberOfScenarios++
+		scenarioName = elem.ScenarioID
 		log.Println(elem)
 		if elem.Status == false {
 			scenariosWithError++
@@ -88,10 +81,41 @@ func printStats(stats chan Stats) {
 		}
 	}
 
+	duration := time.Since(startTime)
+
 	// TODO: Não está sendo separado entre cenários com e sem erros
-	log.Printf("Cenário %s executou em %v", scenarioName, totalTime)
-	log.Printf("\tCenários executados: %v", numberOfScenarios)
+	log.Printf("Report - Geral")
+	log.Printf("\tTempo total de execução do teste: %v", duration)
+	log.Printf("\tNúmero de IDs únicos: %v", config.UniqueIds)
 	log.Printf("\tCenários executados sem erros: %v (%.2f%%)", numberOfScenarios-scenariosWithError, float64(numberOfScenarios-scenariosWithError)/float64(numberOfScenarios)*100.0)
 	log.Printf("\tCenários executados com erros: %v (%.2f%%)", scenariosWithError, float64(scenariosWithError)/float64(numberOfScenarios)*100.0)
-	log.Printf("\tTempo de execução (min/med/max): (%v/%v/%v)", minTime, totalTime.Nanoseconds()/int64(numberOfScenarios), maxTime)
+	// log.Printf("\tNúmero de cenários OK: %v", 1)
+	// log.Printf("\tNúmero de cenários com falhas: %v", 1)
+	log.Printf("\tNúmero de vezes que ocorreu timeout: %v", 0)
+	// log.Printf("\tTempos de resposta: Mínimo, médio, máximo, percentil 95%%: %v", 1)
+
+	log.Printf("Report - Por cenário")
+
+	// TODO: tem que fazer o report de todos os cenarios... hoje ta assumindo que so tem 1
+	log.Printf("\tCenário: %v", scenarioName)
+	log.Printf("\t\tTempo total de execução do cenário: %v", totalTime)
+	// log.Printf("\t\tCenários executados: %v", numberOfScenarios) // ou nro de execuções?
+	log.Printf("\t\tCenários executados sem erros: %v (%.2f%%)", numberOfScenarios-scenariosWithError, float64(numberOfScenarios-scenariosWithError)/float64(numberOfScenarios)*100.0)
+	log.Printf("\t\tCenários executados com erros: %v (%.2f%%)", scenariosWithError, float64(scenariosWithError)/float64(numberOfScenarios)*100.0)
+	log.Printf("\t\tNúmero de vezes que ocorreu timeout: %v", 1)
+	// TODO: faltou percentil 95%
+	log.Printf("\t\tTempo de execução (min/med/max): (%v/%v/%v)", minTime, totalTime.Nanoseconds()/int64(numberOfScenarios), maxTime)
+
+	log.Printf("Report - Por endpoint")
+	log.Printf("\tEndpoint: %v", "xxx")
+	log.Printf("\t\tTempo total de execução do endpoint: %v", 1)
+	log.Printf("\t\tEndpoints executados sem erros: %v (%.2f%%)", numberOfScenarios-scenariosWithError, float64(numberOfScenarios-scenariosWithError)/float64(numberOfScenarios)*100.0)
+	log.Printf("\t\tEndpoints executados com erros: %v (%.2f%%)", scenariosWithError, float64(scenariosWithError)/float64(numberOfScenarios)*100.0)
+	log.Printf("\t\tNúmero de vezes que ocorreu timeout: %v", 1)
+	// TODO: faltou percentil 95%
+	log.Printf("\t\tTempo de execução (min/med/max): (%v/%v/%v)", minTime, totalTime.Nanoseconds()/int64(numberOfScenarios), maxTime)
+	// * Tamanho das requisições/respostas: Mínimo, médio, máximo, percentil 95% (percentil tb???)
+
+	// TODO: Report por cenario/endpoint?
+	done <- true
 }
