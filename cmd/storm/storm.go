@@ -13,6 +13,22 @@ type Config struct {
 	wg                sync.WaitGroup
 }
 
+// Fluxo principal
+//
+// Carrega config
+// Inicializa dados a serem medidos
+// Configura número processos
+// Dispara threads conforme número usuários
+// 	Inicializa medições cenário
+// 	Para cada step
+// 		Inicializa medições step
+// 		Executa step
+// 		Se erro aborta
+// 		Coleta dados step
+// 	Coleta dados cenário
+// Coleta dados teste
+// Gera report
+
 func main() {
 	log.Printf("Starting Storm V 0.1\n")
 	log.Printf("Número de processos: %v", runtime.GOMAXPROCS(0))
@@ -52,16 +68,3 @@ func main() {
 
 	log.Printf("Finishing Storm V 0.1\n")
 }
-
-// - Inicializa dados a serem medidos
-// - Configura número processos
-// - Dispara threads conforme número usuários
-//     - Inicializa medições cenário
-//     - Para cada step
-//         - Inicializa medições step
-//         - Executa step
-//         - Se erro aborta
-//         - Coleta dados step
-//     - Coleta dados cenário
-// - Coleta dados teste
-// - Gera report

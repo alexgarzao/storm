@@ -30,6 +30,14 @@ func (step *StepCheckHttpStatusCode) Run(context *Context) error {
 	return nil
 }
 
-func (step *StepCheckHttpStatusCode) StepId(context *Context) string {
+func (step *StepCheckHttpStatusCode) StepID(context *Context) string {
 	return fmt.Sprintf("Check http status code is %v", step.HttpStatusCode)
+}
+
+func (step *StepCheckHttpStatusCode) EndpointID(context *Context) string {
+	return ""
+}
+
+func (step *StepCheckHttpStatusCode) MustStat(context *Context) bool {
+	return false
 }

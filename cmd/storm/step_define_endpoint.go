@@ -23,6 +23,14 @@ func (step *StepDefineEndpoint) Run(context *Context) error {
 	return nil
 }
 
-func (step *StepDefineEndpoint) StepId(context *Context) string {
+func (step *StepDefineEndpoint) StepID(context *Context) string {
 	return fmt.Sprintf("Define URL %v", step.Url)
+}
+
+func (step *StepDefineEndpoint) EndpointID(context *Context) string {
+	return ""
+}
+
+func (step *StepDefineEndpoint) MustStat(context *Context) bool {
+	return false
 }

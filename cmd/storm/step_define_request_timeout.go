@@ -22,6 +22,14 @@ func (step *StepDefineRequestTimeout) Run(context *Context) error {
 	return nil
 }
 
-func (step *StepDefineRequestTimeout) StepId(context *Context) string {
+func (step *StepDefineRequestTimeout) StepID(context *Context) string {
 	return fmt.Sprintf("Define request timeout %v", step.Timeout)
+}
+
+func (step *StepDefineRequestTimeout) EndpointID(context *Context) string {
+	return ""
+}
+
+func (step *StepDefineRequestTimeout) MustStat(context *Context) bool {
+	return false
 }

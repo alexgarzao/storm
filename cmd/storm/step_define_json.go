@@ -37,6 +37,14 @@ func (step *StepDefineJson) Run(context *Context) error {
 	return nil
 }
 
-func (step *StepDefineJson) StepId(context *Context) string {
+func (step *StepDefineJson) StepID(context *Context) string {
 	return fmt.Sprintf("Define JSON")
+}
+
+func (step *StepDefineJson) EndpointID(context *Context) string {
+	return ""
+}
+
+func (step *StepDefineJson) MustStat(context *Context) bool {
+	return false
 }

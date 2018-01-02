@@ -24,19 +24,30 @@ func (scenary *Scenary) AddStep(step Step) error {
 
 func (scenary *Scenary) Run(context *Context) error {
 	defer context.Config.wg.Done()
-	var elapsed time.Duration
+	scenarioStart := time.Now()
 
 	for _, v := range scenary.Steps {
 		stepStart := time.Now()
-		duration := time.Since(stepStart)
-		elapsed += duration
-		log.Printf("STEP %s took %s", v.StepId(context), duration)
+		err := v.Run(context)
+		stepDuration := time.Since(stepStart)
+		log.Printf("STEP %s took %s", v.StepID(context), stepDuration)
 
-		if err := v.Run(context); err != nil {
+		context.Stats <- Stats{
+			ScenarioID: scenary.Name,
+			EndpointID: v.EndpointID(context),
+			Duration:   stepDuration,
+			MustStat:   v.MustStat(context),
+			Status:     err == nil,
+		}
+
+		// TODO: nao daria para dar um break no if abaixo e setar status se err == nil?
+		if err != nil {
 			context.Stats <- Stats{
-				Id:       scenary.Name,
-				Duration: elapsed,
-				Status:   false,
+				ScenarioID: scenary.Name,
+				EndpointID: "",
+				Duration:   time.Since(scenarioStart),
+				MustStat:   true,
+				Status:     false,
 			}
 
 			return err
@@ -44,9 +55,11 @@ func (scenary *Scenary) Run(context *Context) error {
 	}
 
 	context.Stats <- Stats{
-		Id:       scenary.Name,
-		Duration: elapsed,
-		Status:   true,
+		ScenarioID: scenary.Name,
+		EndpointID: "",
+		Duration:   time.Since(scenarioStart),
+		MustStat:   true,
+		Status:     true,
 	}
 
 	return nil

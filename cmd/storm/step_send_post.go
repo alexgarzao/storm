@@ -33,6 +33,14 @@ func (step *StepSendPost) Run(context *Context) error {
 	return nil
 }
 
-func (step *StepSendPost) StepId(context *Context) string {
+func (step *StepSendPost) StepID(context *Context) string {
 	return "POST TO " + context.Config.BaseUrl + context.getStringValue("URL")
+}
+
+func (step *StepSendPost) EndpointID(context *Context) string {
+	return "POST " + context.Config.BaseUrl + context.getStringValue("URL")
+}
+
+func (step *StepSendPost) MustStat(context *Context) bool {
+	return true
 }
