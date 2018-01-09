@@ -53,6 +53,7 @@ func collectStats(config *Config, stats chan Stats, done chan bool) {
 	// TODO: Hoje só temos um cenário. Mas a rotina deve ser revista para trabalhar com mais de um cenário.
 	numberOfScenarios := 0
 	scenariosWithError := 0
+	numberOfRequests := 0
 	var minTime time.Duration = 1<<63 - 1
 	var maxTime time.Duration
 	var totalTime time.Duration
@@ -64,6 +65,7 @@ func collectStats(config *Config, stats chan Stats, done chan bool) {
 			continue
 		}
 		if elem.EndpointID != "" {
+			numberOfRequests += 1
 			continue
 		}
 		numberOfScenarios++
@@ -85,7 +87,9 @@ func collectStats(config *Config, stats chan Stats, done chan bool) {
 
 	// TODO: Não está sendo separado entre cenários com e sem erros
 	log.Printf("Report - Geral")
+	log.Printf("\tNúmero de requisições: %v", numberOfRequests)
 	log.Printf("\tTempo total de execução do teste: %v", duration)
+	log.Printf("\tRequisições por segundo: %.2f", float64(numberOfRequests)/float64(duration.Seconds()))
 	log.Printf("\tNúmero de IDs únicos: %v", config.UniqueIds)
 	log.Printf("\tCenários executados sem erros: %v (%.2f%%)", numberOfScenarios-scenariosWithError, float64(numberOfScenarios-scenariosWithError)/float64(numberOfScenarios)*100.0)
 	log.Printf("\tCenários executados com erros: %v (%.2f%%)", scenariosWithError, float64(scenariosWithError)/float64(numberOfScenarios)*100.0)
